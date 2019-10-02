@@ -6,24 +6,29 @@ import (
 )
 
 func main() {
-	var locale string
-	var translations = make(map[string]string)
-	translations["en"] = "hello"
-	translations["de"] = "gtten tag"
-	translations["fr"] = "bonjour"
-	//var languages = [4]string{"en", "es", "de", "fr"}
-	//locale = languages[1]
-
-	if len(os.Args) == 1 {
-		fmt.Println("enter language code")
-		fmt.Scanf("%s", &locale)
-	} else {
-		locale = os.Args[1]
-	}
-	output := translations[locale]
+	locale := argswitch(os.Args)
+	output := translate(locale)
 	if output == "" {
 		output = "Yo"
 	}
+	fmt.Println(output, "Go!")
+}
 
-	fmt.Printf(output, "Go")
+func translate(input string) string {
+	var translations = make(map[string]string)
+	translations["en"] = "Hello"
+	translations["de"] = "Guten tag"
+	translations["fr"] = "Bonjour"
+	return translations[input]
+}
+
+func argswitch(input []string) string {
+	var locale string
+	if len(input) == 1 {
+		fmt.Println("Enter language code:")
+		fmt.Scanf("%s", &locale)
+	} else {
+		locale = input[1]
+	}
+	return locale
 }
