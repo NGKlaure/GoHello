@@ -10,6 +10,7 @@ import (
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/disk"
 	"github.com/shirou/gopsutil/host"
+	"github.com/shirou/gopsutil/load"
 	"github.com/shirou/gopsutil/mem"
 	"github.com/shirou/gopsutil/net"
 )
@@ -57,7 +58,14 @@ func GetHardwareData(w http.ResponseWriter, r *http.Request) {
 	interfStat, err := net.Interfaces()
 	handleErr(err)
 
-	html := "<html>OS : " + runtimeOS + "<br>"
+	//get running proccesses
+	miscStat, err := load.Misc()
+	handleErr(err)
+
+	//html := "<html>OS : " + runtimeOS + "<br>"
+	html := "<html>System and memory infos " + "<br>"
+	html = html + "<br>"
+	html = html + "OS : " + runtimeOS + "<br>"
 	html = html + "Total memory: " + strconv.FormatUint(vmStat.Total, 10) + " bytes <br>"
 	html = html + "Free memory: " + strconv.FormatUint(vmStat.Free, 10) + " bytes<br>"
 	html = html + "Percentage used memory: " + strconv.FormatFloat(vmStat.UsedPercent, 'f', 2, 64) + "%<br>"
@@ -73,9 +81,13 @@ func GetHardwareData(w http.ResponseWriter, r *http.Request) {
 	html = html + "Free disk space: " + strconv.FormatUint(diskStat.Free, 10) + " bytes<br>"
 	html = html + "Percentage disk space usage: " + strconv.FormatFloat(diskStat.UsedPercent, 'f', 2, 64) + "%<br>"
 
+	html = html + "<br>"
+	html = html + "<br>"
 	// since my machine has one CPU, I'll use the 0 index
 	// if your machine has more than 1 CPU, use the correct index
 	// to get the proper data
+	html = html + "CPU infos " + "<br>"
+	html = html + "<br>"
 	html = html + "CPU index number: " + strconv.FormatInt(int64(cpuStat[0].CPU), 10) + "<br>"
 	html = html + "VendorID: " + cpuStat[0].VendorID + "<br>"
 	html = html + "Family: " + cpuStat[0].Family + "<br>"
@@ -84,17 +96,27 @@ func GetHardwareData(w http.ResponseWriter, r *http.Request) {
 	html = html + "Speed: " + strconv.FormatFloat(cpuStat[0].Mhz, 'f', 2, 64) + " MHz <br>"
 
 	for idx, cpupercent := range percentage {
-		html = html + "Current CPU utilization: [
-			" + strconv.Itoa(idx) + "] " + strconv.FormatFloat(cpupercent, 'f', 2, 64) + "%<br>"
+		html = html + "Current CPU utilization: [" + strconv.Itoa(idx) + "] " + strconv.FormatFloat(cpupercent, 'f', 2, 64) + "%<br>"
 	}
 
+	html = html + "<br>"
+	html = html + "<br>"
+	html = html + "Prossesses infos " + "<br>"
+	html = html + "<br>"
 	html = html + "Hostname: " + hostStat.Hostname + "<br>"
 	html = html + "Uptime: " + strconv.FormatUint(hostStat.Uptime, 10) + "<br>"
-	html = html + "Number of processes running: " + strconv.FormatUint(hostStat.Procs, 10) + "<br>"
+	html = html + "total Number of processes: " + strconv.FormatUint(hostStat.Procs, 10) + "<br>"
+	html = html + "Number of processes running: " + strconv.FormatInt(int64(miscStat.ProcsRunning), 10) + "<br>"
+	html = html + "Number of blocked  prossesses: " + strconv.FormatInt(int64(miscStat.ProcsBlocked), 10) + "<br>"
+
 	// another way to get the operating system name
 	// both darwin for Mac OSX, For Linux, can be ubuntu as platform
 	// and linux for OS
 
+	html = html + "<br>"
+	html = html + "<br>"
+	html = html + "Platform,interface and IP @ infos " + "<br>"
+	html = html + "<br>"
 	html = html + "OS: " + hostStat.OS + "<br>"
 	html = html + "Platform: " + hostStat.Platform + "<br>"
 

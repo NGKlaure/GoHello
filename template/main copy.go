@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"html/template"
 	"log"
+	"os/exec"
+	"strings"
 
 	//"net"
 	"net/http"
@@ -340,12 +343,66 @@ func PrintProcInfos(w http.ResponseWriter, r *http.Request) {
 		var process ps.Process
 		process = processList[x]
 		html = html + "------------------------------------------------------<br>"
-		html = html + "PID: " + strconv.Itoa(process.Pid()) + "  executableName: " + process.Executable() + "<br>"
+		html = html + "PID: " + strconv.Itoa(process.Pid()) + "  executable Name: " + process.Executable() + "<br>"
 		//log.Printf("%d\t%s\n", process.Pid(), process.Executable())
 
 		// do os.* stuff on the pid
 	}
 
+	html = html + "</html>"
+
+	w.Write([]byte(html))
+
+}
+
+type Process struct {
+	pid int
+	cpu float64
+}
+
+func PrintProcCPUInfos(w http.ResponseWriter, r *http.Request) {
+
+	//html := "<html>OS : " + runtimeOS + "<br>"
+	html := "<html>Processes infos " + "<br>"
+	html = html + "<br>"
+
+	cmd := exec.Command("ps", "aux")
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	err := cmd.Run()
+	if err != nil {
+		log.Fatal(err)
+	}
+	processes := make([]*Process, 0)
+	for {
+		line, err := out.ReadString('\n')
+		if err != nil {
+			break
+		}
+		tokens := strings.Split(line, " ")
+		ft := make([]string, 0)
+		for _, t := range tokens {
+			if t != "" && t != "\t" {
+				ft = append(ft, t)
+			}
+		}
+		//log.Println(len(ft), ft)
+
+		pid, err := strconv.Atoi(ft[1])
+		if err != nil {
+			continue
+		}
+		cpu, err := strconv.ParseFloat(ft[2], 64)
+		if err != nil {
+			log.Fatal(err)
+		}
+		processes = append(processes, &Process{pid, cpu})
+	}
+	for _, p := range processes {
+		html = html + "------------------------------------------------------<br>"
+		html = html + "process PID: " + strconv.Itoa(p.pid) + "  takes : " + strconv.FormatFloat(p.cpu, 'f', 2, 64) + "% of  the cpu<br>"
+		log.Println("Process ", p.pid, " takes ", p.cpu, " % of the CPU")
+	}
 	html = html + "</html>"
 
 	w.Write([]byte(html))
@@ -363,6 +420,7 @@ func main() {
 	http.HandleFunc("/getMemoryInfos", GetMemoryInfos)
 	http.HandleFunc("/getInterfaceInfos", GetInterfaceInfos)
 	http.HandleFunc("/PrintProcInfos", PrintProcInfos)
+	http.HandleFunc("/PrintProc CPUInfos", PrintProcCPUInfos)
 
 	http.ListenAndServe(":7000", nil)
 
